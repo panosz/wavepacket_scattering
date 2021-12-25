@@ -1,2 +1,11 @@
 venv/
 output/
+__pycache__/
+_skbuild/
+.cache/
+build/
+compile_commands.json
+*.log
+*.so
+*.egg-info
+
