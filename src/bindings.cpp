@@ -15,36 +15,17 @@ typedef WP::WavePacket WavePacket;
 
 PYBIND11_MODULE(_wavepacket, m) {
   m.doc() = R"pbdoc(
-  Pybind11 example plugin
+  A python package modelling the interaction of charged particles with an electrostatic pulse.
   -----------------------
 
-  .. currentmodule:: scikit_build_example
+  .. currentmodule:: _wavepacket
 
   .. autosummary::
   :toctree: _generate
 
-  add
-  subtract
+  WavePacket
   )pbdoc";
 
-  m.def("add", static_cast<int(*)(int,int)>(&mylib::add), R"pbdoc(
-  Add two numbers
-
-  Some other explanation about the add function.
-  )pbdoc", py::arg("i"), py::arg("j")=3);
-
-  m.def("add", static_cast<double(*)(double,double)>(&mylib::add), R"pbdoc(
-  Add two numbers
-
-  Some other explanation about the add function.
-  )pbdoc", py::arg("i"), py::arg("j")=3.0);
-
-
-  m.def("subtract", [](int i, int j) { return i - j; }, R"pbdoc(
-  Subtract two numbers
-
-  Some other explanation about the subtract function.
-  )pbdoc", py::arg("i"), py::arg("j"));
 
   #ifdef VERSION_INFO
   m.attr("__version__") = MACRO_STRINGIFY(VERSION_INFO);
