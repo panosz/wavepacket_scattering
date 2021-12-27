@@ -43,3 +43,7 @@ def test_Wavepacket_vector_dz_call():
 
     nt.assert_allclose(vector_result, scalar_result, atol=1e-16, rtol=1e-16)
 
+
+def test_Wavepacket_system_call():
+    w = wavepacket.WavePacket(1,2,3,4)
+    w.system([1,2], 3)

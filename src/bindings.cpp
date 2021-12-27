@@ -2,6 +2,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/eigen.h>
 #include "my_lib.hpp"
+#include "type_definitions.hpp"
 #include "wavepacket.hpp"
 
 #define STRINGIFY(x) #x
@@ -65,6 +66,7 @@ PYBIND11_MODULE(_wavepacket, m) {
     .def("__call__", &WavePacket::operator()<WP::Vector>, py::arg("z"), py::arg("t"))
     .def("dz", &WavePacket::dz<double>, py::arg("z"), py::arg("t"))
     .def("dz", &WavePacket::dz<WP::Vector>, py::arg("z"), py::arg("t"))
+    .def("system", &WavePacket::system, py::arg("s"), py::arg("t"))
     .def("_exponent", &WavePacket::_exponent<double>)
     .def("_exponent", &WavePacket::_exponent<WP::Vector>)
     .def("_phase", &WavePacket::_phase<double>)

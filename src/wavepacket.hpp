@@ -1,9 +1,7 @@
 #include <Eigen/Core>
+#include "type_definitions.hpp"
 
 namespace WP{
-  typedef Eigen::ArrayXd Vector;
-  typedef Eigen::Array2d State;
-
 class WavePacket
   {
 
@@ -27,6 +25,7 @@ class WavePacket
     inline T _phase(const T z, const T t) const;
     template<typename T>
     inline auto _phase_and_envelope(const T& z, const T& t) const;
+    State system(const State& s, double t) const;
   };
 
 // Template method implementations.{{{

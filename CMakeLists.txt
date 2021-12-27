@@ -22,16 +22,42 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # Now we can find pybind11
 find_package(pybind11 CONFIG REQUIRED)
 find_package (Eigen3 REQUIRED)
+find_package (Boost REQUIRED)
+
 
 pybind11_add_module(_wavepacket MODULE src/bindings.cpp)
 
-add_library(mylibrary src/my_lib.hpp src/my_lib.cpp src/wavepacket.cpp src/wavepacket.hpp)
+add_library(mylibrary src/my_lib.hpp src/my_lib.cpp src/wavepacket.cpp src/wavepacket.hpp src/type_definitions.hpp)
 
 target_link_libraries(mylibrary PUBLIC Eigen3::Eigen)
-target_link_libraries(_wavepacket PUBLIC mylibrary Eigen3::Eigen)
+target_link_libraries(_wavepacket PUBLIC mylibrary Eigen3::Eigen Boost::boost)
 
 target_compile_definitions(_wavepacket PRIVATE VERSION_INFO=${PROJECT_VERSION})
 
-target_compile_features(mylibrary PUBLIC cxx_std_17)
-target_compile_features(_wavepacket PUBLIC cxx_std_17)
+target_compile_features(mylibrary PUBLIC cxx_std_20)
+target_compile_features(_wavepacket PUBLIC cxx_std_20)
+
+set(COMPILE_OPTS 
+        -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic
+        -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual
+        -Wconversion -Wsign-conversion -Wmisleading-indentation
+        -Wduplicated-cond -Wduplicated-branches -Wlogical-op
+        -Wnull-dereference -Wuseless-cast -Wdouble-promotion
+        -Wformat=2
+        # -frounding-math
+        $<$<CONFIG:Debug>:
+        -g
+        >
+        $<$<CONFIG:Release>:
+        -O3
+        # -march=native
+        >
+        )
+
+
+target_compile_options(mylibrary PRIVATE ${COMPILE_OPTS})
+target_compile_options(_wavepacket PRIVATE ${COMPILE_OPTS})
+
+
+
 install(TARGETS _wavepacket DESTINATION .)
