@@ -4,6 +4,7 @@
 #include "my_lib.hpp"
 #include "type_definitions.hpp"
 #include "wavepacket.hpp"
+// #include "integrator.hpp"
 
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
@@ -68,8 +69,9 @@ PYBIND11_MODULE(_wavepacket, m) {
     .def("_exponent", &WavePacket::_exponent<WP::Vector>)
     .def("_phase", &WavePacket::_phase<double>)
     .def("_phase", &WavePacket::_phase<WP::Vector>)
-    .def("__repr__", &WP::WavePacket::_to_string);
-
-
-
+    .def("__repr__", &WP::WavePacket::_to_string)
+    .def("make_integrator", &WP::WavePacket::make_integrator);
+ py::class_<WP::Integrator>(m, "Integrator")
+   .def(py::init<WavePacket>())
+   .def("integrate", &WP::Integrator::integrate);
 }

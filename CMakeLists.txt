@@ -27,7 +27,7 @@ find_package (Boost REQUIRED)
 
 pybind11_add_module(_wavepacket MODULE src/bindings.cpp)
 
-add_library(mylibrary src/my_lib.hpp src/my_lib.cpp src/wavepacket.cpp src/wavepacket.hpp src/type_definitions.hpp)
+add_library(mylibrary src/wavepacket.cpp src/wavepacket.hpp src/type_definitions.hpp src/integrator.cpp)
 
 target_link_libraries(mylibrary PUBLIC Eigen3::Eigen)
 target_link_libraries(_wavepacket PUBLIC mylibrary Eigen3::Eigen Boost::boost)
@@ -43,7 +43,8 @@ set(COMPILE_OPTS
         -Wconversion -Wsign-conversion -Wmisleading-indentation
         -Wduplicated-cond -Wduplicated-branches -Wlogical-op
         -Wnull-dereference -Wuseless-cast -Wdouble-promotion
-        -Wformat=2
+        -Wformat=2 -static-libstdc++
+        -fPIC
         # -frounding-math
         $<$<CONFIG:Debug>:
         -g

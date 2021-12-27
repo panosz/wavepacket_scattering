@@ -1,8 +1,13 @@
+#ifndef WAVEPACKET_DEFINITIONS
+#define WAVEPACKET_DEFINITIONS
+
 #include <string>
 #include <Eigen/Core>
 #include "type_definitions.hpp"
 
 namespace WP{
+
+class Integrator;
 class WavePacket
   {
 
@@ -17,6 +22,8 @@ class WavePacket
     T operator()(T z, T t) const;
     template <typename T>
     T dz(const T& z, const T& t) const;
+
+    Integrator make_integrator();
 
     template<typename T>
     inline T _exponent(const T& z) const;
@@ -74,4 +81,22 @@ class WavePacket
 
       return std::make_tuple(_phase(z, t), _envelope(z));
     }/*}}}*/
+
+class Integrator
+{
+public:
+  explicit Integrator(WavePacket);
+  Integrator(Integrator &&) = default;
+  Integrator(const Integrator &) = default;
+  ~Integrator() = default;
+
+  State integrate(State s0, double t0) const;
+
+private:
+
+  WavePacket _wp;
+};
+
+
 }
+#endif // !WAVEPACKET_DEFINITIONS

@@ -1,5 +1,6 @@
 #include <cmath>
 #include <tuple>
+// #include "integrator.hpp"
 #include "wavepacket.hpp"
 
 namespace WP{
@@ -32,8 +33,13 @@ State WavePacket::system(const State& s, double t) const
 
   }
 
+Integrator WavePacket::make_integrator() 
+{
+  return Integrator{*this};
+}
 
-std::string WavePacket::_to_string() const{
+std::string WavePacket::_to_string() const
+{
 
   return std::string{"<_wavepacket.Wavepacket('"}
   + "A="    + std::to_string(A)     + ", "
