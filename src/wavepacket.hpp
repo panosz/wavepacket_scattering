@@ -2,6 +2,7 @@
 
 namespace WP{
   typedef Eigen::ArrayXd Vector;
+  typedef Eigen::Array2d State;
 
 class WavePacket
   {
@@ -14,15 +15,30 @@ class WavePacket
     WavePacket(const WavePacket &) = default;
     ~WavePacket() = default;
     template <typename T>
-    T operator()(T z, T t) const{
+    T operator()(T z, T t) const;
+    template <typename T>
+    T dz(const T& z, const T& t) const;
+
+    template<typename T>
+    inline T _exponent(const T& z) const;
+    template<typename T>
+      inline T _envelope(const T& z) const;
+    template<typename T>
+    inline T _phase(const T z, const T t) const;
+    template<typename T>
+    inline auto _phase_and_envelope(const T& z, const T& t) const;
+  };
+
+// Template method implementations.{{{
+    template <typename T>
+    T WavePacket::operator()(T z, T t) const{
       using namespace std;
       const auto [phase, envelope] = _phase_and_envelope(z, t);
       return envelope * sin(phase);
-    };
+    }
 
     template <typename T>
-
-    T dz(const T& z, const T& t) const{
+    T WavePacket::dz(const T& z, const T& t) const{
       using namespace std;
 
       const auto [phase, envelope] = _phase_and_envelope(z, t);
@@ -33,29 +49,28 @@ class WavePacket
     };
 
     template<typename T>
-    inline T _exponent(const T& z) const
+    inline T WavePacket::_exponent(const T& z) const
     {
       return  -(z*z)/(2*sigma_sq);
     };
 
     template<typename T>
-      inline T _envelope(const T& z) const
+      inline T WavePacket::_envelope(const T& z) const
     {
       using namespace std;
       return A * exp(_exponent(z));
     }
 
     template<typename T>
-    inline T _phase(const T z, const T t) const{
+    inline T WavePacket::_phase(const T z, const T t) const{
       return k*(z - vp *t);
     };
 
     template<typename T>
-    inline auto _phase_and_envelope(const T& z, const T& t) const{
+    inline auto WavePacket::_phase_and_envelope(const T& z, const T& t) const{
 
       using namespace std;
 
       return std::make_tuple(_phase(z, t), _envelope(z));
-    };
-  };
+    };/*}}}*/
 }
