@@ -1,3 +1,4 @@
+#include <string>
 #include <Eigen/Core>
 #include "type_definitions.hpp"
 
@@ -26,6 +27,7 @@ class WavePacket
     template<typename T>
     inline auto _phase_and_envelope(const T& z, const T& t) const;
     State system(const State& s, double t) const;
+    std::string _to_string() const;
   };
 
 // Template method implementations.{{{
@@ -45,13 +47,13 @@ class WavePacket
       const auto dz2 = -z/sigma_sq * envelope * sin(phase);
 
       return dz1 + dz2;
-    };
+    }
 
     template<typename T>
     inline T WavePacket::_exponent(const T& z) const
     {
       return  -(z*z)/(2*sigma_sq);
-    };
+    }
 
     template<typename T>
       inline T WavePacket::_envelope(const T& z) const
@@ -63,7 +65,7 @@ class WavePacket
     template<typename T>
     inline T WavePacket::_phase(const T z, const T t) const{
       return k*(z - vp *t);
-    };
+    }
 
     template<typename T>
     inline auto WavePacket::_phase_and_envelope(const T& z, const T& t) const{
@@ -71,5 +73,5 @@ class WavePacket
       using namespace std;
 
       return std::make_tuple(_phase(z, t), _envelope(z));
-    };/*}}}*/
+    }/*}}}*/
 }

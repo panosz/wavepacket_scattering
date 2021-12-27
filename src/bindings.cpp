@@ -71,7 +71,7 @@ PYBIND11_MODULE(_wavepacket, m) {
     .def("_exponent", &WavePacket::_exponent<WP::Vector>)
     .def("_phase", &WavePacket::_phase<double>)
     .def("_phase", &WavePacket::_phase<WP::Vector>)
-  ;
+    .def("__repr__", &WP::WavePacket::_to_string);
 
 
 

@@ -47,3 +47,7 @@ def test_Wavepacket_vector_dz_call():
 def test_Wavepacket_system_call():
     w = wavepacket.WavePacket(1,2,3,4)
     w.system([1,2], 3)
+
+def test_Wavepacket_repr():
+    w = wavepacket.WavePacket(1,2,3,4)
+    assert "A=1" in str(w)
