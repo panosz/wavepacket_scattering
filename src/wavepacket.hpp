@@ -4,6 +4,7 @@
 #include <string>
 #include <Eigen/Core>
 #include "type_definitions.hpp"
+#include "integrator.hpp"
 
 namespace WP{
 
@@ -81,22 +82,6 @@ class WavePacket
 
       return std::make_tuple(_phase(z, t), _envelope(z));
     }/*}}}*/
-
-class Integrator
-{
-public:
-  explicit Integrator(WavePacket&);
-  Integrator(Integrator &&) = default;
-  Integrator(const Integrator &) = default;
-  ~Integrator() = default;
-
-  State integrate(State s0, double t0) const;
-
-private:
-
-  WavePacket* _wp;
-};
-
 
 }
 #endif // !WAVEPACKET_DEFINITIONS

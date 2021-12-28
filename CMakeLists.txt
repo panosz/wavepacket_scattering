@@ -27,7 +27,7 @@ find_package (Boost REQUIRED)
 
 pybind11_add_module(_wavepacket MODULE src/bindings.cpp)
 
-add_library(mylibrary src/wavepacket.cpp src/wavepacket.hpp src/type_definitions.hpp src/integrator.cpp)
+add_library(mylibrary src/wavepacket.cpp src/wavepacket.hpp src/type_definitions.hpp src/integrator.hpp src/integrator.cpp)
 
 target_link_libraries(mylibrary PUBLIC Eigen3::Eigen)
 target_link_libraries(_wavepacket PUBLIC mylibrary Eigen3::Eigen Boost::boost)

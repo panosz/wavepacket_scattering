@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.integrate import solve_ivp
 
 class PyWavePacket():
 
@@ -42,4 +43,18 @@ class PyWavePacket():
         dzdt = p
         dpdt = -self.dz(z, t)
         return np.array([dzdt, dpdt])
+
+    def make_integrator(self):
+        return Integrator(self)
+
+
+
+class Integrator():
+    def __init__(self, wp):
+        self.wp = wp
+
+    def __call__(self, point, t_integr):
+        sol = solve_ivp(self.wp.system,[0, t_integr], y0=point,)
+
+        return sol.y[:, -1]
 

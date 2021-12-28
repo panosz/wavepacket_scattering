@@ -73,5 +73,5 @@ PYBIND11_MODULE(_wavepacket, m) {
     .def("make_integrator", &WP::WavePacket::make_integrator);
  py::class_<WP::Integrator>(m, "Integrator")
    .def(py::init<WavePacket&>())
-   .def("integrate", &WP::Integrator::integrate);
+   .def("integrate", &WP::Integrator::integrate, py::arg("point"), py::arg("t_integr"));
 }
