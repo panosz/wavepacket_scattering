@@ -10,11 +10,11 @@ if __name__ == "__main__":
     wp = WavePacket(A=1e-2, sigma=10, k=1, vp=0.01)
 
     p0 = 12e-3
-    x0 = np.linspace(-50.5,-40, num=1000)
+    x0 = np.linspace(-50.5,-40, num=100)
 
-    scatterrer = wp.make_integrator(atol=1e-10, rtol=1e-10)
+    scatterrer = wp.make_integrator(atol=1e-3, rtol=1e-6)
 
-    scat = np.column_stack([scatterrer.integrate(point=[xi, p0],t_integr=10000)
+    scat = np.column_stack([scatterrer.integrate(point=[xi, p0],t_integr=(0,10000))
                             for xi in x0])
 
     out=np.zeros((4,x0.size))

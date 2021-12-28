@@ -57,7 +57,7 @@ class Integrator():
 
     def __call__(self, point, t_integr):
         tollerances = dict(atol=self.atol, rtol=self.rtol)
-        sol = solve_ivp(self.wp.system,[0, t_integr], y0=point, **tollerances)
+        sol = solve_ivp(self.wp.system, t_integr, y0=point, **tollerances)
 
         return sol.y[:, -1]
 

@@ -15,7 +15,7 @@ if __name__ == "__main__":
 
     scatterrer = wp.make_integrator(atol=1e-10, rtol=1e-10)
 
-    scat = np.column_stack([scatterrer.integrate(point=[xi, p0],t_integr=10000)
+    scat = np.column_stack([scatterrer.integrate(point=[xi, p0],t_integr=(0, 10000))
                             for xi in x0])
 
     out=np.zeros((4,x0.size))
@@ -24,15 +24,15 @@ if __name__ == "__main__":
     out[1,:]=p0
     out[2:,:]=scat
 
-    #  fig, ax = plt.subplots()
-    #  ax.plot(x0,scat[1,:],',k',alpha=0.5)
+    fig, ax = plt.subplots()
+    ax.plot(x0,scat[1,:],',k',alpha=0.5)
 
-    #  fig, ax = plt.subplots()
-    #  ax.plot(scat[0, :],scat[1,:],',k',alpha=0.5)
+    fig, ax = plt.subplots()
+    ax.plot(scat[0, :],scat[1,:],',k',alpha=0.5)
 
-    #  fig, ax = plt.subplots()
-    #  ax.hist(scat[1,:], bins=1000)
+    fig, ax = plt.subplots()
+    ax.hist(scat[1,:], bins=1000)
 
 
-    #  plt.show()
+    plt.show()
 

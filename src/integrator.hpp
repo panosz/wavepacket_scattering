@@ -17,7 +17,7 @@ public:
   Integrator(const Integrator &) = default;
   ~Integrator() = default;
 
-  State integrate(State s0, double t_integr) const;
+  State integrate(State s0, std::pair<double, double> t_integr) const;
 
 private:
 
