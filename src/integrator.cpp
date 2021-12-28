@@ -15,7 +15,7 @@ typedef odeint::runge_kutta_cash_karp54<State,double,State,double,odeint::vector
 typedef odeint::controlled_runge_kutta< error_stepper_type > controlled_stepper_type;
     //]
 
-Integrator::Integrator(WavePacket wp):_wp{wp}{}
+Integrator::Integrator(WavePacket& wp):_wp{&wp}{}
 
 State Integrator::integrate(State s0, double t0) const
 {
@@ -24,8 +24,7 @@ State Integrator::integrate(State s0, double t0) const
   double t_end = t0 + 10;
   double dt_init = 0.01;
 
-  integrate_adaptive( controlled_stepper,[this](const State& s, State &dsdt, double t){dsdt = _wp.system(s,t);},
-                           s0, t0, t_end, dt_init);
+  integrate_adaptive( controlled_stepper,[this](const State& s, State &dsdt, double t){dsdt = _wp->system(s,t);}, s0, t0, t_end, dt_init);
   return s0;
 }
 

@@ -85,7 +85,7 @@ class WavePacket
 class Integrator
 {
 public:
-  explicit Integrator(WavePacket);
+  explicit Integrator(WavePacket&);
   Integrator(Integrator &&) = default;
   Integrator(const Integrator &) = default;
   ~Integrator() = default;
@@ -94,7 +94,7 @@ public:
 
 private:
 
-  WavePacket _wp;
+  WavePacket* _wp;
 };
 
 
