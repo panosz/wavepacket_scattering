@@ -44,17 +44,23 @@ class PyWavePacket():
         dpdt = -self.dz(z, t)
         return np.array([dzdt, dpdt])
 
-    def make_integrator(self):
-        return Integrator(self)
+    def make_integrator(self, atol=1e-6, rtol=1e-3):
+        return Integrator(self, atol=atol, rtol=rtol)
 
 
 
 class Integrator():
-    def __init__(self, wp):
+    def __init__(self, wp, atol, rtol):
         self.wp = wp
+        self.atol=atol
+        self.rtol=rtol
 
     def __call__(self, point, t_integr):
-        sol = solve_ivp(self.wp.system,[0, t_integr], y0=point,)
+        tollerances = dict(atol=self.atol, rtol=self.rtol)
+        sol = solve_ivp(self.wp.system,[0, t_integr], y0=point, **tollerances)
 
         return sol.y[:, -1]
 
+
+    def integrate(self, point, t_integr):
+        return self(point, t_integr)
