@@ -70,8 +70,14 @@ PYBIND11_MODULE(_wavepacket, m) {
     .def("_phase", &WavePacket::_phase<double>)
     .def("_phase", &WavePacket::_phase<WP::Vector>)
     .def("__repr__", &WP::WavePacket::_to_string)
-    .def("make_integrator", &WP::WavePacket::make_integrator);
- py::class_<WP::Integrator>(m, "Integrator")
-   .def(py::init<WavePacket&>())
-   .def("integrate", &WP::Integrator::integrate, py::arg("point"), py::arg("t_integr"));
+    .def("make_integrator", &WP::WavePacket::make_integrator,
+         py::arg("atol")=WP::Integrator::ATOL_DEFAULT,
+         py::arg("rtol")=WP::Integrator::RTOL_DEFAULT);
+
+  py::class_<WP::Integrator>(m, "Integrator")
+    .def(py::init<WavePacket&,double, double>(),
+         py::arg("wp"),
+         py::arg("atol")=WP::Integrator::ATOL_DEFAULT,
+         py::arg("rtol")=WP::Integrator::RTOL_DEFAULT)
+    .def("integrate", &WP::Integrator::integrate, py::arg("point"), py::arg("t_integr"));
 }

@@ -33,9 +33,9 @@ State WavePacket::system(const State& s, double t) const
 
   }
 
-Integrator WavePacket::make_integrator() 
+Integrator WavePacket::make_integrator(double atol, double rtol) 
 {
-  return Integrator{*this};
+  return Integrator{*this, atol, rtol};
 }
 
 std::string WavePacket::_to_string() const

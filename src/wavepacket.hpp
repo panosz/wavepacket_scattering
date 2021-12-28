@@ -24,7 +24,8 @@ class WavePacket
     template <typename T>
     T dz(const T& z, const T& t) const;
 
-    Integrator make_integrator();
+    Integrator make_integrator(double atol=Integrator::ATOL_DEFAULT,
+                               double rtol=Integrator::RTOL_DEFAULT);
 
     template<typename T>
     inline T _exponent(const T& z) const;

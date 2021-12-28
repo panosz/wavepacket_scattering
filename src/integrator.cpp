@@ -15,15 +15,19 @@ using error_stepper_type = odeint::runge_kutta_cash_karp54<State,double,State,do
 using controlled_stepper_type = odeint::controlled_runge_kutta< error_stepper_type > ;
     
 
-Integrator::Integrator(WavePacket& wp):_wp{&wp}{}
+Integrator::Integrator(WavePacket& wp, double atol, double rtol):
+_wp{&wp},_atol{atol},_rtol{rtol}{}
 
 State Integrator::integrate(State s0, double t_integr) const
 {
 
-  controlled_stepper_type controlled_stepper;
+  auto controlled_stepper=odeint::make_controlled(_atol, _rtol, error_stepper_type());
   double dt_init = 0.01;
 
-  integrate_adaptive( controlled_stepper,[this](const State& s, State &dsdt, double t){dsdt = _wp->system(s,t);}, s0, 0.0, t_integr, dt_init);
+  integrate_adaptive(
+  controlled_stepper,[this](const State& s, State &dsdt, double t){dsdt = _wp->system(s,t);},
+  s0, 0.0, t_integr, dt_init
+  );
   return s0;
 }
 
