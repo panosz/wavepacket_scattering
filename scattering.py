@@ -76,40 +76,65 @@ def sort_scattering_result(scattering_result):
     return scattering_result[scattering_result[:, 1].argsort()]
 
 
-def theoretical_transmission_coeff_formula(p_i, wp):
-    return wp.vp * np.sqrt(2) / (p_i - wp.vp)
+class Transmission_coeff_calculator_Base():
+    pass
+
+    def __call__(self, p, wp):
+        return np.array([self.theoretical_transmission_coeff_i(pi, wp)
+                         for pi in p])
 
 
-def theoretical_transmission_coeff_i(p_i, wp):
-    A = wp.A
-    vp = wp.vp
-    if p_i - vp <= -np.sqrt(2 * A) or p_i - vp >= np.sqrt(2*A):
-        return 1.0
+class HeuristicTransmissionCoefCalculator(Transmission_coeff_calculator_Base):
 
-    if p_i <= 0.0:
-        return 0
+    def theoretical_transmission_coeff_formula(self, p_i, wp):
+        return wp.vp * np.sqrt(2) / (p_i - wp.vp/2)
 
-    if p_i <= vp:
-        return 1.0
+    def theoretical_transmission_coeff_i(self, p_i, wp):
+        A = wp.A
+        vp = wp.vp
+        if p_i - 3*vp/4 <= -np.sqrt(2 * A) or p_i - vp >= np.sqrt(2*A):
+            return 1.0
 
-    out = theoretical_transmission_coeff_formula(p_i, wp)
+        if p_i <= vp/2:
+            return 0
 
-    out = min(1, out)
-    out = max(0, out)
+        out = self.theoretical_transmission_coeff_formula(p_i, wp)
 
-    return out
+        out = min(1, out)
+        out = max(0, out)
+
+        return out
 
 
-def theoretical_transmission_coeff(p, wp):
-    return np.array([theoretical_transmission_coeff_i(pi, wp)
-                     for pi in p])
+class TransmissionCoefCalculator(Transmission_coeff_calculator_Base):
+
+    def theoretical_transmission_coeff_formula(self, p_i, wp):
+        return wp.vp * np.sqrt(2) / (p_i - wp.vp)
+
+    def theoretical_transmission_coeff_i(self, p_i, wp):
+        A = wp.A
+        vp = wp.vp
+        if p_i - vp <= -np.sqrt(2 * A) or p_i - vp >= np.sqrt(2*A):
+            return 1.0
+
+        if p_i <= 0.0:
+            return 0
+
+        if p_i <= vp:
+            return 1.0
+
+        out = self.theoretical_transmission_coeff_formula(p_i, wp)
+
+        out = min(1, out)
+        out = max(0, out)
+        return out
 
 
 if __name__ == "__main__":
     wp = WavePacket(A=1e-2, sigma=40, k=1, vp=0.015)
 
     icm = RandomInitialConditionMaker(wp)
-    init_points, init_times = icm.make_initial_conditions(num=100000,
+    init_points, init_times = icm.make_initial_conditions(num=10000,
                                                           p_max=5e-1)
 
     scatterrer = wp.make_integrator(atol=1e-10, rtol=1e-10)
@@ -153,7 +178,7 @@ if __name__ == "__main__":
                color='r')
 
     fig, ax = plt.subplots()
-    chunks = 1000
+    chunks = 500
     p_av = []
     tr_c = []
     for sc_r in chunked(out,
@@ -167,8 +192,10 @@ if __name__ == "__main__":
 
     ax.plot(p_av, tr_c)
 
-    tr_theoretical = theoretical_transmission_coeff(p_av, wp)
+    tr_heuristic = HeuristicTransmissionCoefCalculator()(p_av, wp)
+    tr_theoretical = TransmissionCoefCalculator()(p_av, wp)
 
-    ax.plot(p_av, tr_theoretical, 'r--')
+    ax.plot(p_av, tr_theoretical, 'r--', alpha=0.7)
+    ax.plot(p_av, tr_heuristic, 'k--', alpha=0.7)
 
     plt.show()
