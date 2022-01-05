@@ -82,11 +82,15 @@ def theoretical_transmission_coeff_formula(p_i, wp):
 
 def theoretical_transmission_coeff_i(p_i, wp):
     A = wp.A
-    if p_i <= -np.sqrt(2 * A) or p_i >= np.sqrt(2*A):
+    vp = wp.vp
+    if p_i - vp <= -np.sqrt(2 * A) or p_i - vp >= np.sqrt(2*A):
         return 1.0
 
     if p_i <= 0.0:
         return 0
+
+    if p_i <= vp:
+        return 1.0
 
     out = theoretical_transmission_coeff_formula(p_i, wp)
 
@@ -105,7 +109,7 @@ if __name__ == "__main__":
     wp = WavePacket(A=1e-2, sigma=40, k=1, vp=0.015)
 
     icm = RandomInitialConditionMaker(wp)
-    init_points, init_times = icm.make_initial_conditions(num=10000,
+    init_points, init_times = icm.make_initial_conditions(num=100000,
                                                           p_max=5e-1)
 
     scatterrer = wp.make_integrator(atol=1e-10, rtol=1e-10)
@@ -149,7 +153,7 @@ if __name__ == "__main__":
                color='r')
 
     fig, ax = plt.subplots()
-    chunks = 100
+    chunks = 1000
     p_av = []
     tr_c = []
     for sc_r in chunked(out,
