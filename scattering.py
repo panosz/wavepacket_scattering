@@ -77,7 +77,7 @@ def sort_scattering_result(scattering_result):
 
 
 def theoretical_transmission_coeff_formula(p_i, wp):
-    return wp.vp * 2 * np.sqrt(2) * np.pi/(p_i-wp.vp)
+    return wp.vp * np.sqrt(2) / (p_i - wp.vp)
 
 
 def theoretical_transmission_coeff_i(p_i, wp):
@@ -96,29 +96,8 @@ def theoretical_transmission_coeff_i(p_i, wp):
     return out
 
 
-def theoretical_transmission_coeff_corrected_i(p_i, wp):
-    A = wp.A
-    if p_i <= -np.sqrt(2 * A) or p_i >= np.sqrt(2*A):
-        return 1.0
-
-    if p_i <= 0.0:
-        return 0
-
-    out = theoretical_transmission_coeff_formula(p_i, wp)/(2*np.pi)
-
-    out = min(1, out)
-    out = max(0, out)
-
-    return out
-
-
 def theoretical_transmission_coeff(p, wp):
     return np.array([theoretical_transmission_coeff_i(pi, wp)
-                     for pi in p])
-
-
-def theoretical_transmission_coeff_corrected(p, wp):
-    return np.array([theoretical_transmission_coeff_corrected_i(pi, wp)
                      for pi in p])
 
 
@@ -184,7 +163,7 @@ if __name__ == "__main__":
 
     ax.plot(p_av, tr_c)
 
-    tr_theoretical = theoretical_transmission_coeff_corrected(p_av, wp)
+    tr_theoretical = theoretical_transmission_coeff(p_av, wp)
 
     ax.plot(p_av, tr_theoretical, 'r--')
 
