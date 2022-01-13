@@ -2,6 +2,7 @@ import numpy as np
 from numpy.random import default_rng
 from more_itertools import chunked
 import matplotlib.pyplot as plt
+from interval import interval, inf
 #  from wavepacket import PyWavePacket as WavePacket
 from wavepacket import WavePacket
 
@@ -77,61 +78,86 @@ def sort_scattering_result(scattering_result):
 
 
 class Transmission_coeff_calculator_Base():
-    pass
+    def __init__(self, wp):
+        self.wp = wp
 
-    def __call__(self, p, wp):
-        return np.array([self.theoretical_transmission_coeff_i(pi, wp)
+    @staticmethod
+    def clip(x):
+        return np.clip(x, a_min=0, a_max=1)
+
+    def transmission_coeff_formula_in_ref_frame(self, p_i):
+        return self.wp.vp * np.sqrt(2) / p_i
+
+    def theoretical_transmission_coeff_formula(self, p_i):
+        return self.transmission_coeff_formula_in_ref_frame(p_i - self.v_ref)
+
+    def __call__(self, p):
+        return np.array([self.theoretical_transmission_coeff_i(pi)
                          for pi in p])
+
+    def theoretical_transmission_coeff_i(self, p_i):
+        if p_i not in self.interaction_interval:
+            return 1.0
+
+        if p_i in self.total_reflection_interval:
+            return 0
+
+        if p_i in self.total_transmission_interval:
+            return 1.0
+
+        out = self.theoretical_transmission_coeff_formula(p_i)
+
+        return self.clip(np.abs(out))
 
 
 class HeuristicTransmissionCoefCalculator(Transmission_coeff_calculator_Base):
 
-    def theoretical_transmission_coeff_formula(self, p_i, wp):
-        return wp.vp * np.sqrt(2) / (p_i - wp.vp/2)
+    @property
+    def v_ref(self):
+        return wp.vp / 2
 
-    def theoretical_transmission_coeff_i(self, p_i, wp):
+    @property
+    def interaction_interval(self):
         A = wp.A
-        vp = wp.vp
-        if p_i - 3*vp/4 <= -np.sqrt(2 * A) or p_i - vp >= np.sqrt(2*A):
-            return 1.0
+        vp = self.wp.vp
+        p_crit = np.sqrt(2 * A)
+        return interval[-p_crit + 3 * vp/4,
+                        p_crit + vp]
 
-        if p_i <= vp/2:
-            return 0
+    @property
+    def total_transmission_interval(self):
+        return interval[self.wp.vp/2, self.wp.vp]
 
-        out = self.theoretical_transmission_coeff_formula(p_i, wp)
-
-        out = min(1, out)
-        out = max(0, out)
-
-        return out
+    @property
+    def total_reflection_interval(self):
+        return interval([-inf, self.wp.vp/2]) & self.interaction_interval
 
 
 class TransmissionCoefCalculator(Transmission_coeff_calculator_Base):
 
-    def theoretical_transmission_coeff_formula(self, p_i, wp):
-        return wp.vp * np.sqrt(2) / (p_i - wp.vp)
+    @property
+    def v_ref(self):
+        return wp.vp
 
-    def theoretical_transmission_coeff_i(self, p_i, wp):
+    @property
+    def interaction_interval(self):
         A = wp.A
-        vp = wp.vp
-        if p_i - vp <= -np.sqrt(2 * A) or p_i - vp >= np.sqrt(2*A):
-            return 1.0
+        vp = self.wp.vp
+        p_crit = np.sqrt(2 * A)
+        return interval[-p_crit + vp,
+                        p_crit + vp]
 
-        if p_i <= 0.0:
-            return 0
+    @property
+    def total_transmission_interval(self):
+        return interval[0, self.wp.vp]
 
-        if p_i <= vp:
-            return 1.0
-
-        out = self.theoretical_transmission_coeff_formula(p_i, wp)
-
-        out = min(1, out)
-        out = max(0, out)
-        return out
+    @property
+    def total_reflection_interval(self):
+        return interval([-inf, 0]) & self.interaction_interval
 
 
 if __name__ == "__main__":
-    wp = WavePacket(A=1e-2, sigma=40, k=1, vp=0.015)
+    wp = WavePacket(A=1e-2, sigma=40, k=2, vp=0.085)
 
     icm = RandomInitialConditionMaker(wp)
     init_points, init_times = icm.make_initial_conditions(num=10000,
@@ -160,6 +186,7 @@ if __name__ == "__main__":
                xmax=np.sqrt(2 * wp.A)+wp.vp,
                alpha=0.2,
                color='r')
+    ax.axvline(wp.vp)
 
     fig, ax = plt.subplots()
     ax.plot(out[:, 1], out[:, -1]-out[:, 1], ',k', alpha=1)
@@ -178,7 +205,7 @@ if __name__ == "__main__":
                color='r')
 
     fig, ax = plt.subplots()
-    chunks = 500
+    chunks = 1000
     p_av = []
     tr_c = []
     for sc_r in chunked(out,
@@ -192,8 +219,8 @@ if __name__ == "__main__":
 
     ax.plot(p_av, tr_c)
 
-    tr_heuristic = HeuristicTransmissionCoefCalculator()(p_av, wp)
-    tr_theoretical = TransmissionCoefCalculator()(p_av, wp)
+    tr_heuristic = HeuristicTransmissionCoefCalculator(wp)(p_av)
+    tr_theoretical = TransmissionCoefCalculator(wp)(p_av)
 
     ax.plot(p_av, tr_theoretical, 'r--', alpha=0.7)
     ax.plot(p_av, tr_heuristic, 'k--', alpha=0.7)
