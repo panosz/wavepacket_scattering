@@ -56,6 +56,11 @@ class RandomInitialConditionMaker():
         return points, times
 
 
+def calculate_delta_p(scattering_result):
+    momenta = scattering_result[:, [1, 3]]
+    return momenta[:, 1] - momenta[:, 0]
+
+
 def check_if_transmitted(scattering_result):
     "checks which particles maintained their direction after collision"
     momenta = scattering_result[:, [1, 3]]
@@ -67,14 +72,28 @@ def transmission_coeff(scattering_result):
     return np.sum(tr)/tr.size
 
 
-def average_p_and_transmission_coeff(scattering_result):
+def average_p_and_transmission_coeff(scattering_result, v_f=None):
     p_mean = np.mean(scattering_result[:, 1])
-    tr_coeff = transmission_coeff(scattering_result)
+
+    if v_f is None:
+        tr_coeff = transmission_coeff(scattering_result)
+    else:
+        scattering_result_in_frame = change_frame_of_scattering_result(
+            scattering_result,
+            v_f,
+        )
+        tr_coeff = transmission_coeff(scattering_result_in_frame)
     return p_mean, tr_coeff
 
 
 def sort_scattering_result(scattering_result):
     return scattering_result[scattering_result[:, 1].argsort()]
+
+
+def change_frame_of_scattering_result(scattering_result, v_f):
+    out = np.copy(scattering_result)
+    out[:, [1, 3]] = out[:, [1, 3]] - v_f
+    return out
 
 
 class Transmission_coeff_calculator_Base():
@@ -157,7 +176,7 @@ class TransmissionCoefCalculator(Transmission_coeff_calculator_Base):
 
 
 if __name__ == "__main__":
-    wp = WavePacket(A=1e-2, sigma=40, k=2, vp=0.085)
+    wp = WavePacket(A=1e-2, sigma=40, k=2, vp=0.045)
 
     icm = RandomInitialConditionMaker(wp)
     init_points, init_times = icm.make_initial_conditions(num=10000,
@@ -189,18 +208,18 @@ if __name__ == "__main__":
     ax.axvline(wp.vp)
 
     fig, ax = plt.subplots()
-    ax.plot(out[:, 1], out[:, -1]-out[:, 1], ',k', alpha=1)
+    ax.plot(out[:, 1]/wp.vp, (out[:, -1]-out[:, 1])/wp.vp, ',k', alpha=0.2)
     ax.set_aspect("equal")
-    ax.axvspan(xmin=np.sqrt(2 * wp.A)+wp.vp,
+    ax.axvspan(xmin=(np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
                xmax=max(ax.get_xlim()),
                alpha=0.2,
                )
     ax.axvspan(xmin=min(ax.get_xlim()),
-               xmax=-np.sqrt(2 * wp.A)+wp.vp,
+               xmax=(-np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
                alpha=0.2,
                )
-    ax.axvspan(xmin=-np.sqrt(2 * wp.A)+wp.vp,
-               xmax=np.sqrt(2 * wp.A)+wp.vp,
+    ax.axvspan(xmin=(-np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
+               xmax=(np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
                alpha=0.2,
                color='r')
 
@@ -211,7 +230,7 @@ if __name__ == "__main__":
     for sc_r in chunked(out,
                         out.shape[0]//chunks):
         sc_r = np.row_stack(sc_r)
-        p_av_i, tr_c_i = average_p_and_transmission_coeff(sc_r)
+        p_av_i, tr_c_i = average_p_and_transmission_coeff(sc_r, v_f=wp.vp/2)
         p_av.append(p_av_i)
         tr_c.append(tr_c_i)
     p_av = np.array(p_av)
@@ -223,6 +242,17 @@ if __name__ == "__main__":
     tr_theoretical = TransmissionCoefCalculator(wp)(p_av)
 
     ax.plot(p_av, tr_theoretical, 'r--', alpha=0.7)
-    ax.plot(p_av, tr_heuristic, 'k--', alpha=0.7)
+    #  ax.plot(p_av, tr_heuristic, 'k--', alpha=0.7)
+
+    delta_p = calculate_delta_p(out)
+
+    delta_p_av = np.mean(delta_p)
+
+    delta_p_av_pos_init = np.mean(delta_p[out[:, 1] > 0])
+    delta_p_av_neg_init = np.mean(delta_p[out[:, 1] < 0])
+
+    print(f"average delta_p = {delta_p_av}")
+    print(f"average delta_p for positive initial p = {delta_p_av_pos_init}")
+    print(f"average delta_p for negative initial p = {delta_p_av_neg_init}")
 
     plt.show()
