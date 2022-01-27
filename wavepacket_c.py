@@ -26,6 +26,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots()
     ax.plot(x0,scat[1,:],',k',alpha=0.5)
+    ax.axhline(p0,c="k", linestyle='--',alpha=0.5)
 
     fig, ax = plt.subplots()
     ax.plot(scat[0, :],scat[1,:],',k',alpha=0.5)
