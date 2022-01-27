@@ -6,7 +6,7 @@ from interval import interval, inf
 #  from wavepacket import PyWavePacket as WavePacket
 from wavepacket import WavePacket
 
-rng = default_rng()
+rng = default_rng(seed=42)
 
 
 def random(start, stop, num=50):
@@ -56,44 +56,60 @@ class RandomInitialConditionMaker():
         return points, times
 
 
-def calculate_delta_p(scattering_result):
-    momenta = scattering_result[:, [1, 3]]
-    return momenta[:, 1] - momenta[:, 0]
+class ScatteringResult(np.ndarray):
+    """
+    Array containing the output of the scattering of a particle distribution
+    from a wavepacket.
+    """
+    def __new__(cls, input_array, info=None):
+        # Input array is an already formed ndarray instance
+        # We first cast to be our class type
+        obj = np.asarray(input_array).view(cls)
+        # add the new attribute to the created instance
+        obj.info = info
+        # Finally, we must return the newly created object:
+        return obj
 
+    def calculate_delta_p(self):
+        momenta = self[:, [1, 3]]
+        return momenta[:, 1] - momenta[:, 0]
 
-def check_if_transmitted(scattering_result):
-    "checks which particles maintained their direction after collision"
-    momenta = scattering_result[:, [1, 3]]
-    return momenta[:, 0] * momenta[:, 1] > 0
+    def check_if_transmitted(self):
+        "checks which particles maintained their direction after collision"
+        momenta = self[:, [1, 3]]
+        return momenta[:, 0] * momenta[:, 1] > 0
 
+    def transmission_coeff(self):
+        tr = self.check_if_transmitted()
+        return np.sum(tr)/tr.size
 
-def transmission_coeff(scattering_result):
-    tr = check_if_transmitted(scattering_result)
-    return np.sum(tr)/tr.size
+    def average_p_and_transmission_coeff(self, v_f=None):
+        p_mean = np.mean(self[:, 1])
 
+        if v_f is None:
+            tr_coeff = self.transmission_coeff()
+        else:
+            scattering_result_in_frame = self.change_frame_of_ref(
+                v_f,
+            )
+            tr_coeff = scattering_result_in_frame.transmission_coeff()
+        return p_mean, tr_coeff
 
-def average_p_and_transmission_coeff(scattering_result, v_f=None):
-    p_mean = np.mean(scattering_result[:, 1])
+    def sort_wrt_p_init(self):
+        return self[self[:, 1].argsort()].copy()
 
-    if v_f is None:
-        tr_coeff = transmission_coeff(scattering_result)
-    else:
-        scattering_result_in_frame = change_frame_of_scattering_result(
-            scattering_result,
-            v_f,
-        )
-        tr_coeff = transmission_coeff(scattering_result_in_frame)
-    return p_mean, tr_coeff
+    def change_frame_of_ref(self, v_f):
+        out = self.copy()
+        out[:, [1, 3]] = out[:, [1, 3]] - v_f
+        return out
 
-
-def sort_scattering_result(scattering_result):
-    return scattering_result[scattering_result[:, 1].argsort()]
-
-
-def change_frame_of_scattering_result(scattering_result, v_f):
-    out = np.copy(scattering_result)
-    out[:, [1, 3]] = out[:, [1, 3]] - v_f
-    return out
+    def chunks(self, num):
+        """
+        iterate in chunks
+        """
+        for sc_r in chunked(self,
+                            self.shape[0]//num):
+            yield type(self)(np.row_stack(sc_r))
 
 
 class Transmission_coeff_calculator_Base():
@@ -187,8 +203,9 @@ if __name__ == "__main__":
     scat = np.row_stack([scatterrer.integrate(point, t_integr=(t, t+1000000))
                          for point, t in zip(init_points, init_times)])
 
-    out = sort_scattering_result(np.column_stack((init_points,
-                                                  scat)))
+    out = ScatteringResult(np.column_stack((init_points, scat)))
+
+    out = out.sort_wrt_p_init()
 
     fig, ax = plt.subplots()
     ax.plot(out[:, 1], out[:, -1]-out[:, 1], ',k', alpha=0.2)
@@ -227,10 +244,8 @@ if __name__ == "__main__":
     chunks = 1000
     p_av = []
     tr_c = []
-    for sc_r in chunked(out,
-                        out.shape[0]//chunks):
-        sc_r = np.row_stack(sc_r)
-        p_av_i, tr_c_i = average_p_and_transmission_coeff(sc_r, v_f=wp.vp/2)
+    for sc_r in out.chunks(chunks):
+        p_av_i, tr_c_i = sc_r.average_p_and_transmission_coeff(v_f=wp.vp/2)
         p_av.append(p_av_i)
         tr_c.append(tr_c_i)
     p_av = np.array(p_av)
@@ -244,7 +259,7 @@ if __name__ == "__main__":
     ax.plot(p_av, tr_theoretical, 'r--', alpha=0.7)
     #  ax.plot(p_av, tr_heuristic, 'k--', alpha=0.7)
 
-    delta_p = calculate_delta_p(out)
+    delta_p = out.calculate_delta_p()
 
     delta_p_av = np.mean(delta_p)
 
