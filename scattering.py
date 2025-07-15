@@ -1,8 +1,9 @@
-import numpy as np
-from numpy.random import default_rng
-from more_itertools import chunked
 import matplotlib.pyplot as plt
-from interval import interval, inf
+import numpy as np
+from interval import inf, interval
+from more_itertools import chunked
+from numpy.random import default_rng
+
 #  from wavepacket import PyWavePacket as WavePacket
 from wavepacket import WavePacket
 
@@ -14,7 +15,7 @@ def random(start, stop, num=50):
     return start + width * rng.random(num)
 
 
-class RandomInitialConditionMaker():
+class RandomInitialConditionMaker:
     """
     Makes random initial conditions uniformly distributed in momentum and time.
 
@@ -22,7 +23,7 @@ class RandomInitialConditionMaker():
 
     def __init__(self, wp, p_eps=1e-4):
         self.wp = wp
-        self.x_wall = 5*wp.sigma
+        self.x_wall = 5 * wp.sigma
         self.p_eps = p_eps
 
     def _make_initial_points(self, num, p_range, x_wall):
@@ -42,16 +43,16 @@ class RandomInitialConditionMaker():
             x_wall=self.x_wall,
         )
 
-        return np.row_stack((pos, neg))
+        return np.vstack((pos, neg))
 
     def make_initial_times(self, num):
         omega = self.wp.k * self.wp.vp
-        T = 2*np.pi/omega
+        T = 2 * np.pi / omega
         return random(0, T, num)
 
     def make_initial_conditions(self, num, p_max):
         points = self.make_initial_points(num, p_max)
-        times = self.make_initial_times(2*num)
+        times = self.make_initial_times(2 * num)
 
         return points, times
 
@@ -61,6 +62,7 @@ class ScatteringResult(np.ndarray):
     Array containing the output of the scattering of a particle distribution
     from a wavepacket.
     """
+
     def __new__(cls, input_array, info=None):
         # Input array is an already formed ndarray instance
         # We first cast to be our class type
@@ -81,7 +83,7 @@ class ScatteringResult(np.ndarray):
 
     def transmission_coeff(self):
         tr = self.check_if_transmitted()
-        return np.sum(tr)/tr.size
+        return np.sum(tr) / tr.size
 
     def average_p_and_transmission_coeff(self, v_f=None):
         p_mean = np.mean(self[:, 1])
@@ -107,12 +109,11 @@ class ScatteringResult(np.ndarray):
         """
         iterate in chunks
         """
-        for sc_r in chunked(self,
-                            self.shape[0]//num):
-            yield type(self)(np.row_stack(sc_r))
+        for sc_r in chunked(self, self.shape[0] // num):
+            yield type(self)(np.vstack(sc_r))
 
 
-class Transmission_coeff_calculator_Base():
+class Transmission_coeff_calculator_Base:
     def __init__(self, wp):
         self.wp = wp
 
@@ -127,8 +128,7 @@ class Transmission_coeff_calculator_Base():
         return self.transmission_coeff_formula_in_ref_frame(p_i - self.v_ref)
 
     def __call__(self, p):
-        return np.array([self.theoretical_transmission_coeff_i(pi)
-                         for pi in p])
+        return np.array([self.theoretical_transmission_coeff_i(pi) for pi in p])
 
     def theoretical_transmission_coeff_i(self, p_i):
         if p_i not in self.interaction_interval:
@@ -156,16 +156,15 @@ class HeuristicTransmissionCoefCalculator(Transmission_coeff_calculator_Base):
         A = wp.A
         vp = self.wp.vp
         p_crit = np.sqrt(2 * A)
-        return interval[-p_crit + 3 * vp/4,
-                        p_crit + vp]
+        return interval[-p_crit + 3 * vp / 4, p_crit + vp]
 
     @property
     def total_transmission_interval(self):
-        return interval[self.wp.vp/2, self.wp.vp]
+        return interval[self.wp.vp / 2, self.wp.vp]
 
     @property
     def total_reflection_interval(self):
-        return interval([-inf, self.wp.vp/2]) & self.interaction_interval
+        return interval([-inf, self.wp.vp / 2]) & self.interaction_interval
 
 
 class TransmissionCoefCalculator(Transmission_coeff_calculator_Base):
@@ -179,8 +178,7 @@ class TransmissionCoefCalculator(Transmission_coeff_calculator_Base):
         A = wp.A
         vp = self.wp.vp
         p_crit = np.sqrt(2 * A)
-        return interval[-p_crit + vp,
-                        p_crit + vp]
+        return interval[-p_crit + vp, p_crit + vp]
 
     @property
     def total_transmission_interval(self):
@@ -195,13 +193,16 @@ if __name__ == "__main__":
     wp = WavePacket(A=1e-2, sigma=40, k=2, vp=0.045)
 
     icm = RandomInitialConditionMaker(wp)
-    init_points, init_times = icm.make_initial_conditions(num=10000,
-                                                          p_max=5e-1)
+    init_points, init_times = icm.make_initial_conditions(num=10000, p_max=5e-1)
 
     scatterrer = wp.make_integrator(atol=1e-10, rtol=1e-10)
 
-    scat = np.row_stack([scatterrer.integrate(point, t_integr=(t, t+1000000))
-                         for point, t in zip(init_points, init_times)])
+    scat = np.vstack(
+        [
+            scatterrer.integrate(point, t_integr=(t, t + 1000000))
+            for point, t in zip(init_points, init_times)
+        ]
+    )
 
     out = ScatteringResult(np.column_stack((init_points, scat)))
 
@@ -211,48 +212,56 @@ if __name__ == "__main__":
         return 2 * (p0 - p)
 
     fig, ax = plt.subplots()
-    ax.plot(out[:, 1], out[:, -1]-out[:, 1], ',k', alpha=0.2)
+    ax.plot(out[:, 1], out[:, -1] - out[:, 1], ",k", alpha=0.2)
     ax.set_aspect("equal")
-    ax.axvspan(xmin=np.sqrt(2 * wp.A)+wp.vp,
-               xmax=max(ax.get_xlim()),
-               alpha=0.2,
-               )
-    ax.axvspan(xmin=min(ax.get_xlim()),
-               xmax=-np.sqrt(2 * wp.A)+wp.vp,
-               alpha=0.2,
-               )
-    ax.axvspan(xmin=-np.sqrt(2 * wp.A)+wp.vp,
-               xmax=np.sqrt(2 * wp.A)+wp.vp,
-               alpha=0.2,
-               color='r')
+    ax.axvspan(
+        xmin=np.sqrt(2 * wp.A) + wp.vp,
+        xmax=max(ax.get_xlim()),
+        alpha=0.2,
+    )
+    ax.axvspan(
+        xmin=min(ax.get_xlim()),
+        xmax=-np.sqrt(2 * wp.A) + wp.vp,
+        alpha=0.2,
+    )
+    ax.axvspan(
+        xmin=-np.sqrt(2 * wp.A) + wp.vp,
+        xmax=np.sqrt(2 * wp.A) + wp.vp,
+        alpha=0.2,
+        color="r",
+    )
     ax.axvline(wp.vp)
     x_plot = np.array([-0.2, 0.2])
-    ax.plot(x_plot, delta_p_total_reflection(x_plot, wp.vp), 'r--')
-    ax.axvline(np.sqrt((np.pi**2-8)/8)*wp.vp, color='k')
-    ax.axvline(-np.sqrt((np.pi**2-8)/8)*wp.vp, color='k')
+    ax.plot(x_plot, delta_p_total_reflection(x_plot, wp.vp), "r--")
+    ax.axvline(np.sqrt((np.pi**2 - 8) / 8) * wp.vp, color="k")
+    ax.axvline(-np.sqrt((np.pi**2 - 8) / 8) * wp.vp, color="k")
 
     fig, ax = plt.subplots()
-    ax.plot(out[:, 1]/wp.vp, (out[:, -1]-out[:, 1])/wp.vp, ',k', alpha=0.2)
+    ax.plot(out[:, 1] / wp.vp, (out[:, -1] - out[:, 1]) / wp.vp, ",k", alpha=0.2)
     ax.set_aspect("equal")
-    ax.axvspan(xmin=(np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
-               xmax=max(ax.get_xlim()),
-               alpha=0.2,
-               )
-    ax.axvspan(xmin=min(ax.get_xlim()),
-               xmax=(-np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
-               alpha=0.2,
-               )
-    ax.axvspan(xmin=(-np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
-               xmax=(np.sqrt(2 * wp.A)+wp.vp)/wp.vp,
-               alpha=0.2,
-               color='r')
+    ax.axvspan(
+        xmin=(np.sqrt(2 * wp.A) + wp.vp) / wp.vp,
+        xmax=max(ax.get_xlim()),
+        alpha=0.2,
+    )
+    ax.axvspan(
+        xmin=min(ax.get_xlim()),
+        xmax=(-np.sqrt(2 * wp.A) + wp.vp) / wp.vp,
+        alpha=0.2,
+    )
+    ax.axvspan(
+        xmin=(-np.sqrt(2 * wp.A) + wp.vp) / wp.vp,
+        xmax=(np.sqrt(2 * wp.A) + wp.vp) / wp.vp,
+        alpha=0.2,
+        color="r",
+    )
 
     fig, ax = plt.subplots()
     chunks = 1000
     p_av = []
     tr_c = []
     for sc_r in out.chunks(chunks):
-        p_av_i, tr_c_i = sc_r.average_p_and_transmission_coeff(v_f=wp.vp/2)
+        p_av_i, tr_c_i = sc_r.average_p_and_transmission_coeff(v_f=wp.vp / 2)
         p_av.append(p_av_i)
         tr_c.append(tr_c_i)
     p_av = np.array(p_av)
@@ -263,7 +272,7 @@ if __name__ == "__main__":
     tr_heuristic = HeuristicTransmissionCoefCalculator(wp)(p_av)
     tr_theoretical = TransmissionCoefCalculator(wp)(p_av)
 
-    ax.plot(p_av, tr_theoretical, 'r--', alpha=0.7)
+    ax.plot(p_av, tr_theoretical, "r--", alpha=0.7)
     #  ax.plot(p_av, tr_heuristic, 'k--', alpha=0.7)
 
     delta_p = out.calculate_delta_p()
