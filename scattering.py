@@ -207,6 +207,9 @@ if __name__ == "__main__":
 
     out = out.sort_wrt_p_init()
 
+    def delta_p_total_reflection(p, p0):
+        return 2 * (p0 - p)
+
     fig, ax = plt.subplots()
     ax.plot(out[:, 1], out[:, -1]-out[:, 1], ',k', alpha=0.2)
     ax.set_aspect("equal")
@@ -223,6 +226,10 @@ if __name__ == "__main__":
                alpha=0.2,
                color='r')
     ax.axvline(wp.vp)
+    x_plot = np.array([-0.2, 0.2])
+    ax.plot(x_plot, delta_p_total_reflection(x_plot, wp.vp), 'r--')
+    ax.axvline(np.sqrt((np.pi**2-8)/8)*wp.vp, color='k')
+    ax.axvline(-np.sqrt((np.pi**2-8)/8)*wp.vp, color='k')
 
     fig, ax = plt.subplots()
     ax.plot(out[:, 1]/wp.vp, (out[:, -1]-out[:, 1])/wp.vp, ',k', alpha=0.2)
