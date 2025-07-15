@@ -2,7 +2,6 @@ import sys
 
 try:
     from skbuild import setup
-    from skbuild import cmaker
 except ImportError:
     print(
         "Please update pip, you need pip 10 or greater,\n"
@@ -12,15 +11,6 @@ except ImportError:
     raise
 
 from setuptools import find_packages
-maker = cmaker.CMaker()
-
-maker.configure()
-python_version = cmaker.CMaker.get_python_version()
-
-python_include_dir = cmaker.CMaker.get_python_include_dir(python_version)
-
-print('python_include_dir = {!r}'.format(python_include_dir))
-maker.make()
 
 setup(
     name="wavepacket",
