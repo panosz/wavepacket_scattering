@@ -213,7 +213,7 @@ if __name__ == "__main__":
 
     fig, ax = plt.subplots()
     ax.plot(out[:, 1], out[:, -1] - out[:, 1], ",k", alpha=0.2)
-    ax.set_aspect("equal")
+    #  ax.set_aspect("equal")
     ax.axvspan(
         xmin=np.sqrt(2 * wp.A) + wp.vp,
         xmax=max(ax.get_xlim()),
@@ -236,6 +236,9 @@ if __name__ == "__main__":
     ax.axvline(np.sqrt((np.pi**2 - 8) / 8) * wp.vp, color="k")
     ax.axvline(-np.sqrt((np.pi**2 - 8) / 8) * wp.vp, color="k")
 
+    ax.axvline(np.sqrt((np.pi**2 - 8) / np.pi**2) * wp.vp, color="k", linestyle="--")
+    ax.axvline(-np.sqrt((np.pi**2 - 8) / np.pi**2) * wp.vp, color="k", linestyle="--")
+
     fig, ax = plt.subplots()
     ax.plot(out[:, 1] / wp.vp, (out[:, -1] - out[:, 1]) / wp.vp, ",k", alpha=0.2)
     ax.set_aspect("equal")
@@ -255,6 +258,9 @@ if __name__ == "__main__":
         alpha=0.2,
         color="r",
     )
+    
+    ax.set_xlabel("$p_0 / v_p$")
+    ax.set_ylabel("$(p_f - p_0) / v_p$")
 
     fig, ax = plt.subplots()
     chunks = 1000
